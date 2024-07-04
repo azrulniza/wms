@@ -1,0 +1,37 @@
+{
+    "name": "wms-vue",
+    "version": "3.10.0",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
+        "prettier": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
+    },
+    "dependencies": {
+        "@fullcalendar/core": "^6.1.14",
+        "@fullcalendar/daygrid": "^6.1.14",
+        "@fullcalendar/interaction": "^6.1.14",
+        "@fullcalendar/timegrid": "^6.1.14",
+        "@fullcalendar/vue3": "^6.1.14",
+        "axios": "^1.7.2",
+        "chart.js": "3.3.2",
+        "primeflex": "^3.3.1",
+        "primeicons": "^6.0.1",
+        "primevue": "^3.52.0",
+        "vue": "^3.2.41",
+        "vue-router": "^4.1.5"
+    },
+    "devDependencies": {
+        "@rushstack/eslint-patch": "^1.1.4",
+        "@vitejs/plugin-vue": "^4.1.0",
+        "@vue/eslint-config-prettier": "^7.0.0",
+        "dotenv": "^16.4.5",
+        "eslint": "^8.22.0",
+        "eslint-plugin-vue": "^9.3.0",
+        "prettier": "^2.7.1",
+        "prettier-plugin-vue": "^1.1.6",
+        "sass": "^1.55.0",
+        "vite": "^4.5.3"
+    }
+}
