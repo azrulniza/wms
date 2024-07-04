@@ -1,0 +1,64 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('tbl_setting_floor', function (Blueprint $table) {
+            $table->id();
+            $table->string('floor')->nullable();
+            $table->tinyInteger('active')->default(1);
+            $table->string('created_by')->nullable();
+            $table->dateTime('created_on')->nullable();;
+            $table->string('changed_by')->nullable();
+            $table->dateTime('changed_on')->nullable();;
+        });
+
+        Schema::create('tbl_setting_seniority', function (Blueprint $table) {
+            $table->id();
+            $table->string('seniority')->nullable();
+            $table->tinyInteger('active')->default(1);
+            $table->string('created_by')->nullable();
+            $table->dateTime('created_on')->nullable();;
+            $table->string('changed_by')->nullable();
+            $table->dateTime('changed_on')->nullable();;
+        });
+
+        Schema::create('tbl_setting_position', function (Blueprint $table) {
+            $table->id();
+            $table->string('position')->nullable();
+            $table->tinyInteger('active')->default(1);
+            $table->string('created_by')->nullable();
+            $table->dateTime('created_on')->nullable();;
+            $table->string('changed_by')->nullable();
+            $table->dateTime('changed_on')->nullable();;
+        });
+
+        Schema::create('tbl_setting_position_lvl', function (Blueprint $table) {
+            $table->id();
+            $table->string('position_lvl')->nullable();
+            $table->tinyInteger('active')->default(1);
+            $table->string('created_by')->nullable();
+            $table->dateTime('created_on')->nullable();;
+            $table->string('changed_by')->nullable();
+            $table->dateTime('changed_on')->nullable();;
+        });
+
+        Schema::create('tbl_setting_position_sts', function (Blueprint $table) {
+            $table->id();
+            $table->string('position_sts')->nullable();
+            $table->tinyInteger('active')->default(1);
+            $table->string('created_by')->nullable();
+            $table->dateTime('created_on')->nullable();;
+            $table->string('changed_by')->nullable();
+            $table->dateTime('changed_on')->nullable();;
+        });
+    }
+};

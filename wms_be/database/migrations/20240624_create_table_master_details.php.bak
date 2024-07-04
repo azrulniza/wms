@@ -1,0 +1,52 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('tbl_master_details_agency', function (Blueprint $table) {
+            $table->id();
+            $table->string('agency_name')->nullable();
+            $table->string('agency_address')->nullable();
+            $table->integer('agency_phone_no');
+            $table->tinyInteger('active')->default(1);
+            $table->string('created_by')->nullable();
+            $table->dateTime('created_on')->nullable();;
+            $table->string('changed_by')->nullable();
+            $table->dateTime('changed_on')->nullable();;
+        });
+
+        Schema::create('tbl_master_details_employee', function (Blueprint $table) {
+            $table->id();
+            $table->integer('employee_staff_id')->nullable();
+            $table->string('employee_ic_no', 50)->nullable();
+            $table->string('employee_name')->nullable();
+            $table->string('employee_email')->nullable();
+            $table->integer('employee_phone_no');
+            $table->string('employee_floor')->nullable();
+            $table->string('employee_seniority')->nullable();
+            $table->string('employee_agency')->nullable();
+            $table->string('employee_position')->nullable();
+            $table->string('employee_position_level')->nullable();
+            $table->string('employee_position_status')->nullable();
+            $table->dateTime('employee_start_join_dt')->nullable();
+            $table->dateTime('employee_end_join_dt')->nullable();
+            $table->dateTime('employee_conversion_dt')->nullable();
+            $table->dateTime('employee_appraisal_dt')->nullable();
+            $table->tinyInteger('active')->default(1);
+            $table->tinyInteger('pdpa')->default(0);
+            $table->string('employee_remarks')->nullable();
+            $table->string('created_by')->nullable();
+            $table->dateTime('created_on')->nullable()->default(DB::raw('CURRENT_TIMESTAMP'));
+            $table->string('changed_by')->nullable();
+            $table->dateTime('changed_on')->nullable()->default(DB::raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'));
+        });
+    }
+};

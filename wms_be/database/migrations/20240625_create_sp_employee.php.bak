@@ -1,0 +1,226 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up()
+    {
+        DB::unprepared('
+            CREATE PROCEDURE `get_employee`()
+            BEGIN
+                CREATE TEMPORARY TABLE IF NOT EXISTS temp_master_details_employee (
+                    id INT,
+                    employee_staff_id VARCHAR(255),
+                    employee_ic_no VARCHAR(255),
+                    employee_name VARCHAR(255),
+                    employee_email VARCHAR(255),
+                    employee_phone_no VARCHAR(255),
+                    employee_agency VARCHAR(255),
+                    employee_position VARCHAR(255),
+                    employee_yow VARCHAR(255),
+                    active BOOLEAN
+                );
+
+                INSERT INTO temp_master_details_employee 
+                (id, employee_staff_id, employee_ic_no, employee_name, employee_email, employee_phone_no, employee_agency, employee_position, employee_yow, active)
+                SELECT 
+                    e.id, 
+                    e.employee_staff_id,
+                    e.employee_ic_no,
+                    e.employee_name, 
+                    e.employee_email, 
+                    e.employee_phone_no, 
+                    e.employee_agency, 
+                    e.employee_position,
+                    CONCAT(
+                        TIMESTAMPDIFF(YEAR, 
+                            CASE 
+                                WHEN e.employee_conversion_dt IS NOT NULL THEN e.employee_conversion_dt 
+                                ELSE e.employee_start_join_dt 
+                            END, 
+                            CASE
+                                WHEN e.employee_end_join_dt IS NULL THEN CURDATE()
+                                WHEN e.employee_end_join_dt IS NOT NULL THEN e.employee_start_join_dt
+                            END
+                            ), ' years, ',
+                        
+                            PERIOD_DIFF(
+                            DATE_FORMAT(
+                                    CASE 
+                                WHEN e.employee_conversion_dt IS NOT NULL THEN e.employee_conversion_dt 
+                                ELSE e.employee_start_join_dt 
+                                END, '%Y%m'),
+                            DATE_FORMAT(
+                                CASE
+                                WHEN e.employee_end_join_dt IS NULL THEN CURDATE()
+                                WHEN e.employee_end_join_dt IS NOT NULL THEN e.employee_start_join_dt
+                            END, '%Y%m')
+                        ) % 12, ' months and ',
+                        
+                        DATEDIFF(
+                            CASE
+                                WHEN e.employee_end_join_dt IS NULL THEN CURDATE()
+                                WHEN e.employee_end_join_dt IS NOT NULL THEN e.employee_start_join_dt
+                            END,
+                            DATE_ADD(
+                                CASE 
+                                    WHEN e.employee_conversion_dt IS NOT NULL THEN e.employee_conversion_dt 
+                                    ELSE e.employee_start_join_dt 
+                                END, 
+                                INTERVAL TIMESTAMPDIFF(MONTH, 
+                                    CASE 
+                                        WHEN e.employee_conversion_dt IS NOT NULL THEN e.employee_conversion_dt 
+                                        ELSE e.employee_start_join_dt 
+                                    END, 
+                                    IFNULL(e.employee_end_join_dt, CURDATE())) MONTH)
+                        ), ' days'
+                    ) AS employee_yow,
+                    e.active
+                FROM tbl_master_details_employee e
+                ORDER BY employee_name ASC;
+
+                SELECT * FROM temp_master_details_employee;
+            END
+        ');
+
+        DB::unprepared('
+            CREATE PROCEDURE `insert_employee`(
+                IN emp_staff_id INT,
+                IN emp_ic_no VARCHAR(50),
+                IN emp_name VARCHAR(255),
+                IN emp_email VARCHAR(255),
+                IN emp_phone_no VARCHAR(255),
+                IN emp_created_by VARCHAR(255)
+            )
+            BEGIN
+                INSERT INTO tbl_master_details_employee 
+                (
+                    employee_staff_id,
+                    employee_ic_no,
+                    employee_name, 
+                    employee_email, 
+                    employee_phone_no,
+                    created_by
+                ) 
+                VALUES 
+                (
+                    emp_staff_id,
+                    emp_ic_no,
+                    emp_name, 
+                    emp_email, 
+                    emp_phone_no,
+                    emp_created_by
+                );
+            END
+        ');
+
+        DB::unprepared('
+            CREATE PROCEDURE `update_employee_profile`(
+                IN p_id BIGINT,
+                IN p_employee_staff_id INT,
+                IN p_employee_ic_no VARCHAR(50),
+                IN p_employee_name VARCHAR(255),
+                IN p_employee_email VARCHAR(255),
+                IN p_employee_phone_no VARCHAR(255),
+                IN p_changed_by VARCHAR(255)
+            )
+            BEGIN
+                UPDATE tbl_master_details_employee
+                SET 
+                    employee_staff_id = p_employee_staff_id,
+                    employee_ic_no = p_employee_ic_no,
+                    employee_name = p_employee_name,
+                    employee_email = p_employee_email,
+                    employee_phone_no = p_employee_phone_no,
+                    changed_by = p_changed_by,
+                    changed_on = CURRENT_TIMESTAMP
+                WHERE id = p_id;
+            END
+        ');
+
+
+
+         DB::unprepared('
+            CREATE PROCEDURE update_employment(
+                IN p_id BIGINT,
+                IN p_employee_name VARCHAR(255),
+                IN p_employee_email VARCHAR(255),
+                IN p_employee_phone_no INT,
+                IN p_employee_floor VARCHAR(255),
+                IN p_employee_seniority VARCHAR(255),
+                IN p_employee_agency VARCHAR(255),
+                IN p_employee_position VARCHAR(255),
+                IN p_employee_position_level VARCHAR(255),
+                IN p_employee_position_status VARCHAR(255),
+                IN p_employee_start_join_dt DATETIME,
+                IN p_employee_end_join_dt DATETIME,
+                IN p_active TINYINT,
+                IN p_pdpa TINYINT,
+                IN p_employee_remarks VARCHAR(255),
+                IN p_employee_conversion_dt DATETIME,
+                IN p_employee_appraisal_dt DATETIME,
+                IN p_changed_by VARCHAR(255),
+                IN p_changed_on DATETIME
+            )
+            BEGIN
+                -- Calculate employee_appraisal_dt if position status is 2
+                IF p_employee_position_status = 2 THEN
+                    SET p_employee_appraisal_dt = DATE_SUB(DATE_SUB(p_employee_end_join_dt, INTERVAL 1 MONTH), INTERVAL 7 DAY);
+                END IF;
+
+                UPDATE tbl_master_details_employee
+                SET 
+                    employee_name = p_employee_name,
+                    employee_email = p_employee_email,
+                    employee_phone_no = p_employee_phone_no,
+                    employee_floor = p_employee_floor,
+                    employee_seniority = p_employee_seniority,
+                    employee_agency = p_employee_agency,
+                    employee_position = p_employee_position,
+                    employee_position_level = p_employee_position_level,
+                    employee_position_status = p_employee_position_status,
+                    employee_start_join_dt = p_employee_start_join_dt,
+                    employee_end_join_dt = p_employee_end_join_dt,
+                    active = p_active,
+                    pdpa = p_pdpa,
+                    employee_remarks = p_employee_remarks,
+                    employee_conversion_dt = p_employee_conversion_dt,
+                    employee_appraisal_dt = p_employee_appraisal_dt,
+                    changed_by = p_changed_by,
+                    changed_on = p_changed_on
+                WHERE id = p_id;
+            END
+        ');
+
+
+        DB::unprepared('
+            CREATE PROCEDURE `soft_delete_employee`(
+                IN p_id BIGINT,
+                IN p_active TINYINT,
+                IN p_changed_by VARCHAR(255)
+            )
+            BEGIN
+                UPDATE tbl_master_details_employee
+                SET 
+                    active = p_active,
+                    changed_by = p_changed_by,
+                    changed_on = CURRENT_TIMESTAMP
+                WHERE id = p_id;
+            END
+        ');
+
+        DB::unprepared('
+            CREATE PROCEDURE `get_employee_details`(
+                IN p_id BIGINT
+            )
+            BEGIN
+                SELECT * FROM tbl_master_details_employee
+                WHERE id = p_id;
+            END
+        ');
+    }
+
+};
