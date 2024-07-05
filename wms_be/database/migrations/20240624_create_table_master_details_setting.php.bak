@@ -60,5 +60,22 @@ return new class extends Migration
             $table->string('changed_by')->nullable();
             $table->dateTime('changed_on')->nullable();;
         });
+
+        Schema::create('tbl_setting_user_role', function (Blueprint $table) {
+            $table->id();
+            $table->string('role', 50)->nullable()->collation('utf8mb4_unicode_ci');
+            $table->tinyInteger('active')->default(1);
+            $table->string('created_by', 255)->nullable()->collation('utf8mb4_unicode_ci');
+            $table->timestamp('created_on')->useCurrent();
+            $table->string('changed_by', 255)->nullable()->collation('utf8mb4_unicode_ci');
+            $table->dateTime('changed_on')->nullable();
+            $table->primary('id')->using('btree');
+        });
+    }
+
+
+    public function down()
+    {
+        Schema::dropIfExists('tbl_setting_user_role');
     }
 };

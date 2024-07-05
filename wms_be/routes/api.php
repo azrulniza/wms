@@ -10,6 +10,7 @@ use App\Http\Controllers\PositionController;
 use App\Http\Controllers\PositionLevelController;
 use App\Http\Controllers\PositionStatusController;
 use App\Http\Controllers\EarningController;
+use App\Http\Controllers\UserRoleController;
 
 
 Route::get('/agency', [AgencyController::class, 'getAgency']);
@@ -55,6 +56,13 @@ Route::post('/position-status/insert', [PositionStatusController::class, 'addPos
 Route::post('/position-status/update', [PositionStatusController::class, 'updatePositionStatus']);
 Route::get('/position-status/{id}', [PositionStatusController::class, 'getPositionStatus']);
 Route::post('/position-status/delete', [PositionStatusController::class, 'softDeletePositionStatus']);
+
+Route::get('/user-roles', [UserRoleController::class, 'getAllUserRoles']);
+Route::post('/user-roles/insert', [UserRoleController::class, 'insertUserRole']);
+Route::put('/user-roles/update', [UserRoleController::class, 'updateUserRole']);
+Route::put('/user-roles/delete', [UserRoleController::class, 'softDeleteUserRole']);
+Route::get('/user-roles/{id}', [UserRoleController::class, 'getUserRoleDetails']);
+
 // Route::get('/', function () {
 //     return view('welcome');
 // });
