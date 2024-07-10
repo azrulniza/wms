@@ -166,27 +166,10 @@ const openEditDialog = (userrole) => {
 
 <template>
     <div class="card">
-        <div v-if="!isMobileView" class="flex justify-content-end mb-3">
-            <Button icon="pi pi-plus" label="Add User Role" @click="BtnUserRoleAdd = true" />
-        </div>
-        <div v-else class="flex justify-content-end mb-3">
-            <Button icon="pi pi-plus" class="ml-auto" @click="BtnUserRoleAdd = true" v-tooltip.top="'Add User Role'" />
-        </div>
-        <Dialog v-model:visible="BtnUserRoleAdd" modal header="Add User Role" class="col-6 md:col-4">
-            <div class="flex flex-column mb-3">
-                <label for="role" class="font-semibold w-6rem mb-3">User Role</label>
-                <InputText v-model="DFUserRole" id="role" class="flex-auto mb-1" autocomplete="off" :class="{ 'p-invalid': userRoleError }" />
-                <small v-if="userRoleError" class="p-error">User Role is required!</small>
-            </div>
-            <div class="flex justify-content-end gap-2">
-                <Button type="button" label="Cancel" severity="secondary" @click="BtnUserRoleAdd = false"></Button>
-                <Button type="button" label="Save" @click="BtnUserRoleAddSave"></Button>
-            </div>
-        </Dialog>
-
-        <DataTable v-model:filters="filters1" filterDisplay="menu" :filters="filters1" :value="user_roles" class="md:col-12" tableStyle="min-width: 50rem" removableSort :globalFilterFields="['role', 'is_active', 'runningNumber']">
-            <template #header>
-                <div class="flex justify-content-end">
+        <DataTable v-model:filters="filters1" filterDisplay="menu" :filters="filters1" paginator :rows="10" :value="user_roles" class="md:col-12" removableSort :globalFilterFields="['role', 'is_active', 'runningNumber']" scrollable>
+            <!-- <template #header> -->
+            <div class="flex justify-content-between">
+                <div v-if="!isMobileView" class="flex align-items-center">
                     <IconField iconPosition="left">
                         <InputIcon>
                             <i class="pi pi-search" />
@@ -194,7 +177,31 @@ const openEditDialog = (userrole) => {
                         <InputText v-model="filters1['global'].value" placeholder="Keyword Search" />
                     </IconField>
                 </div>
-            </template>
+                <div v-else class="flex align-items-center">
+                    <IconField iconPosition="left">
+                        <InputText v-model="filters1['global'].value" placeholder="Keyword Search" class="col-12" />
+                    </IconField>
+                </div>
+
+                <div v-if="!isMobileView" class="flex justify-content-end">
+                    <Button icon="pi pi-plus" label="Add User Role" @click="BtnUserRoleAdd = true" />
+                </div>
+                <div v-else class="flex justify-content-between ml-1">
+                    <Button icon="pi pi-plus" class="ml-auto" @click="BtnUserRoleAdd = true" v-tooltip.top="'Add User Role'" />
+                </div>
+                <Dialog v-model:visible="BtnUserRoleAdd" modal header="Add User Role" class="col-6 md:col-4">
+                    <div class="flex flex-column mb-3">
+                        <label for="role" class="font-semibold w-6rem mb-3">User Role</label>
+                        <InputText v-model="DFUserRole" id="role" class="flex-auto mb-1" autocomplete="off" :class="{ 'p-invalid': userRoleError }" />
+                        <small v-if="userRoleError" class="p-error">User Role is required!</small>
+                    </div>
+                    <div class="flex justify-content-end gap-2">
+                        <Button type="button" label="Cancel" severity="secondary" @click="BtnUserRoleAdd = false"></Button>
+                        <Button type="button" label="Save" @click="BtnUserRoleAddSave"></Button>
+                    </div>
+                </Dialog>
+            </div>
+            <!-- </template> -->
 
             <template #empty> No record found. </template>
             <Column class="col-1" field="runningNumber" header="No." sortable></Column>
