@@ -8,6 +8,9 @@ import { useConfirm } from 'primevue/useconfirm';
 import { usePrimeVue } from 'primevue/config';
 import { employeeList } from '../../../../service/Administration';
 import { FilterMatchMode } from 'primevue/api';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_BASE_URL;
 
 const router = useRouter();
 const confirm = useConfirm();
@@ -35,7 +38,7 @@ const getEmployeeList = async () => {
             runningNumber: index + 1,
             is_active: item.active === 1 ? true : false
         }));
-        console.log('Employee list:', employees.value);
+        //console.log('Employee list:', employees.value);
     } catch (error) {
         console.error('Failed to fetch employee list:', error);
     }
@@ -100,17 +103,33 @@ const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 });
 
-const BtnEmployeeDelete = (event) => {
+const BtnEmployeeDelete = (event, employee) => {
+    const actionMessage = employee.active ? 'delete' : 'reactivate';
+    const message = `Do you want to ${actionMessage} this employee?`;
+
     confirm.require({
         target: event.currentTarget,
-        message: 'Do you want to delete this record?',
+        message: message,
         icon: 'pi pi-info-circle',
         rejectClass: 'p-button-secondary p-button-outlined p-button-sm',
         acceptClass: 'p-button-danger p-button-sm',
         rejectLabel: 'Cancel',
-        acceptLabel: 'Delete',
-        accept: () => {
-            toast.add({ severity: 'info', summary: 'Confirmed', detail: 'Record deleted', life: 3000 });
+        acceptLabel: actionMessage.charAt(0).toUpperCase() + actionMessage.slice(1),
+        accept: async () => {
+            try {
+                const response = await axios.post(`${API_URL}/employee/delete`, {
+                    id: employee.id,
+                    active: employee.active === 1 ? 0 : 1
+                });
+
+                toast.add({ severity: 'success', summary: 'Success', detail: response.data.message, life: 3000 });
+                //toast.add({ severity: 'info', summary: 'Confirmed', detail: response.data.message, life: 3000 });
+
+                await getEmployeeList();
+            } catch (error) {
+                toast.add({ severity: 'error', summary: 'Error', detail: `Failed to ${actionMessage} user role`, life: 3000 });
+                console.error(`Error ${actionMessage} user role:`, error);
+            }
         }
     });
 };
@@ -246,19 +265,20 @@ const menuItems = [
                             <TriStateCheckbox v-model="filterModel.value" inputId="is_active" />
                         </template>
                     </Column>
+
                     <Column class="" field="action" header="Action" frozen alignFrozen="right">
                         <template #body="{ data }">
                             <div class="flex justify-content-center">
                                 <Button icon="pi pi-pencil" class="mr-2" severity="primary" v-tooltip.top="'edit'" @click="BtnEmployeeEdit(data)" rounded />
-                                <Toast />
+
                                 <ConfirmPopup />
                                 <Button
-                                    @click="BtnEmployeeDelete(event, data)"
+                                    @click="(event) => BtnEmployeeDelete(event, data)"
                                     :icon="data.active ? 'pi pi-trash' : 'pi pi-refresh'"
                                     :severity="data.active ? 'danger' : 'secondary'"
                                     v-tooltip.top="data.active ? 'delete' : 'reactivate'"
                                     rounded
-                                ></Button>
+                                />
                             </div>
                         </template>
                     </Column>
