@@ -23,13 +23,10 @@ class FloorController extends Controller
             // Execute the stored procedure
             $floor = DB::select('CALL get_floor()');
 
-            if (empty($floor)) {
-                return response()->json(['message' => 'Floor not found'], 404);
-            }
+            DB::commit();
 
-            $floor = $floor[0]; // Since it's an array of stdClass objects, we take the first one
-
-            return new FloorResource($floor);
+            return FloorResource::collection($floor);
+            //return new FloorResource($floor);
         } catch (\Exception $e) {
             // Handle other exceptions
             return response()->json(['message' => 'An unexpected error occurred.', 'error' => $e->getMessage()], 500);

@@ -32,7 +32,8 @@ const getEmployeeList = async () => {
         // Add runningNumber property to each employee item
         employees.value = result.map((item, index) => ({
             ...item,
-            runningNumber: index + 1
+            runningNumber: index + 1,
+            is_active: item.active === 1 ? true : false
         }));
         console.log('Employee list:', employees.value);
     } catch (error) {
@@ -95,7 +96,8 @@ const formatSize = (bytes) => {
 };
 
 const filters = ref({
-    is_active: { value: null, matchMode: FilterMatchMode.EQUALS }
+    is_active: { value: null, matchMode: FilterMatchMode.EQUALS },
+    global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 });
 
 const BtnEmployeeDelete = (event) => {
@@ -165,9 +167,9 @@ const menuItems = [
                                     <Button @click="uploadEvent(uploadCallback)" icon="pi pi-cloud-upload" rounded outlined severity="success" :disabled="!files || files.length === 0"></Button>
                                     <Button @click="clearCallback()" icon="pi pi-times" rounded outlined severity="danger" :disabled="!files || files.length === 0"></Button>
                                 </div>
-                                <ProgressBar :value="totalSizePercent" :showValue="false" :class="['md:w-20rem h-1rem w-full md:ml-auto', { 'exceeded-progress-bar': totalSizePercent > 100 }]"
-                                    ><span class="white-space-nowrap">{{ totalSize }}B / 1Mb</span></ProgressBar
-                                >
+                                <ProgressBar :value="totalSizePercent" :showValue="false" :class="['md:w-20rem h-1rem w-full md:ml-auto', { 'exceeded-progress-bar': totalSizePercent > 100 }]">
+                                    <span class="white-space-nowrap">{{ totalSize }}B / 1Mb</span>
+                                </ProgressBar>
                             </div>
                         </template>
                         <template #content="{ files, uploadedFiles, removeUploadedFileCallback, removeFileCallback }">
@@ -210,29 +212,53 @@ const menuItems = [
                     </FileUpload>
                 </Dialog>
 
-                <DataTable v-model:filters="filters" filterDisplay="menu" :value="employees" :paginator="true" :rows="10" scrollable>
-                    <Column class="" field="runningNumber" header="ID" />
-                    <Column class="" field="employee_name" header="Name" style="min-width: 200px" />
-                    <Column class="" field="employee_email" header="Email" style="min-width: 200px" />
-                    <Column class="" field="employee_phone_no" header="Phone No" style="min-width: 100px" />
-                    <Column class="" field="employee_agency" header="Agency" style="min-width: 100px" />
-                    <Column class="" field="employee_position" header="Position" style="min-width: 100px" />
-                    <Column class="" field="employee_yow" header="Year of Working" style="min-width: 200px" />
+                <DataTable
+                    v-model:filters="filters"
+                    filterDisplay="menu"
+                    :value="employees"
+                    :paginator="true"
+                    :rows="10"
+                    removableSort
+                    scrollable
+                    :globalFilterFields="['employee_name', 'employee_email', 'employee_phone_no', 'employee_agency', 'employee_position', 'employee_yow', 'runningNumber']"
+                >
+                    <IconField iconPosition="left">
+                        <InputIcon>
+                            <i class="pi pi-search" />
+                        </InputIcon>
+                        <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
+                    </IconField>
+                    <template #empty> No record found. </template>
+                    <Column class="" field="runningNumber" header="No." sortable />
+                    <Column class="" field="employee_name" header="Name" style="min-width: 200px" sortable />
+                    <Column class="" field="employee_email" header="Email" style="min-width: 200px" sortable />
+                    <Column class="" field="employee_phone_no" header="Phone No" style="min-width: 100px" sortable />
+                    <Column class="" field="employee_agency" header="Agency" style="min-width: 100px" sortable />
+                    <Column class="" field="employee_position" header="Position" style="min-width: 100px" sortable />
+                    <Column class="" field="employee_yow" header="Year of Working" style="min-width: 200px" sortable />
                     <Column class="text-center" field="is_active" dataType="boolean" header="Active">
                         <template #body="{ data }">
-                            <i class="pi" :class="{ 'pi-check-circle text-green-500': data.verified, 'pi-times-circle text-red-400': !data.verified }"></i>
+                            <i class="pi" :class="{ 'pi-check-circle text-green-500': data.active, 'pi-times-circle text-red-400': !data.active }"></i>
                         </template>
-                        <template #filter="{ filterModel, filterCallback }">
-                            <TriStateCheckbox v-model="filterModel.value" @change="filterCallback()" />
+
+                        <template #filter="{ filterModel }">
+                            <label for="is_active-filter" class="font-bold"> Is Active </label>
+                            <TriStateCheckbox v-model="filterModel.value" inputId="is_active" />
                         </template>
                     </Column>
                     <Column class="" field="action" header="Action" frozen alignFrozen="right">
-                        <template #body="slotProps">
+                        <template #body="{ data }">
                             <div class="flex justify-content-center">
-                                <Button icon="pi pi-pencil" class="mr-2" severity="primary" v-tooltip.top="'edit'" @click="BtnEmployeeEdit(slotProps.data)" rounded />
+                                <Button icon="pi pi-pencil" class="mr-2" severity="primary" v-tooltip.top="'edit'" @click="BtnEmployeeEdit(data)" rounded />
                                 <Toast />
                                 <ConfirmPopup />
-                                <Button @click="BtnEmployeeDelete($event)" icon="pi pi-trash" severity="danger" v-tooltip.top="'delete'" rounded></Button>
+                                <Button
+                                    @click="BtnEmployeeDelete(event, data)"
+                                    :icon="data.active ? 'pi pi-trash' : 'pi pi-refresh'"
+                                    :severity="data.active ? 'danger' : 'secondary'"
+                                    v-tooltip.top="data.active ? 'delete' : 'reactivate'"
+                                    rounded
+                                ></Button>
                             </div>
                         </template>
                     </Column>

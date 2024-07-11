@@ -1,23 +1,52 @@
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { useToast } from 'primevue/usetoast';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
+import InputMask from 'primevue/inputmask';
+import InputNumber from 'primevue/inputnumber';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_BASE_URL;
+
+// Define props
+const props = defineProps({
+    profile: {
+        type: Object,
+        required: true
+    }
+});
 
 const router = useRouter();
+const route = useRoute();
+const toast = useToast();
 
 const name = ref('');
 const icNo = ref('');
 const email = ref('');
 const staffId = ref('');
-const phoneNo = ref();
+const phoneNo = ref('');
 const nameError = ref(false);
 const icNoError = ref(false);
 const emailError = ref(false);
 const staffIdError = ref(false);
 const phoneNoError = ref(false);
 
-const BtnSaveEmployeeProfile = () => {
+// Watch for changes in the employee prop and update state
+watch(
+    () => props.profile,
+    (newEmployee) => {
+        name.value = newEmployee.employee_name || '';
+        icNo.value = newEmployee.employee_ic_no || '';
+        email.value = newEmployee.employee_email || '';
+        staffId.value = newEmployee.employee_staff_id || '';
+        phoneNo.value = newEmployee.employee_phone_no || '';
+    },
+    { immediate: true }
+);
+
+const BtnSaveEmployeeProfile = async () => {
     nameError.value = !name.value;
     icNoError.value = !icNo.value;
     emailError.value = !email.value;
@@ -25,7 +54,34 @@ const BtnSaveEmployeeProfile = () => {
     phoneNoError.value = !phoneNo.value;
 
     if (name.value && icNo.value && email.value && staffId.value && phoneNo.value) {
-        router.push({ name: 'employeelist' });
+        //router.push({ name: 'employeelist' });
+        try {
+            await updateEmployeeProfile();
+            //router.push({ name: 'employeelist' });
+        } catch (error) {
+            console.error('Error updating employee profile:', error);
+        }
+        console.log('Saving employee profile...');
+    }
+};
+
+const updateEmployeeProfile = async () => {
+    try {
+        const payload = {
+            employee_name: name.value,
+            employee_email: email.value,
+            employee_phone_no: phoneNo.value,
+            employee_staff_id: staffId.value,
+            employee_ic_no: icNo.value,
+            id: route.params.id
+        };
+
+        const response = await axios.put(`${API_URL}/employee/update-profile`, payload);
+        toast.add({ severity: 'success', summary: 'Success', detail: response.data.message, life: 3000 });
+        console.log('Employmee profile updated successfully:', response.data);
+    } catch (error) {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to update employee profile', life: 3000 });
+        console.error('Error updating employee profile:', error);
     }
 };
 
@@ -75,7 +131,6 @@ const BtnCancelEmployeeProfile = () => {
         </div>
     </div>
 </template>
-
 
 <style scoped>
 .p-invalid {

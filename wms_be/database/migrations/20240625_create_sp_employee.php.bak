@@ -96,6 +96,10 @@ return new class extends Migration
                 IN emp_created_by VARCHAR(255)
             )
             BEGIN
+                -- Declare a variable to hold the inserted record ID
+                DECLARE new_employee_id INT;
+
+                -- Insert into the table
                 INSERT INTO tbl_master_details_employee 
                 (
                     employee_staff_id,
@@ -114,6 +118,13 @@ return new class extends Migration
                     emp_phone_no,
                     emp_created_by
                 );
+
+                -- Retrieve the last inserted ID
+                SET new_employee_id = LAST_INSERT_ID();
+
+                -- Return the inserted record
+                SELECT * FROM tbl_master_details_employee WHERE id = new_employee_id;
+
             END
         ');
 
@@ -146,9 +157,6 @@ return new class extends Migration
          DB::unprepared('
             CREATE PROCEDURE update_employment(
                 IN p_id BIGINT,
-                IN p_employee_name VARCHAR(255),
-                IN p_employee_email VARCHAR(255),
-                IN p_employee_phone_no INT,
                 IN p_employee_floor VARCHAR(255),
                 IN p_employee_seniority VARCHAR(255),
                 IN p_employee_agency VARCHAR(255),
@@ -173,9 +181,6 @@ return new class extends Migration
 
                 UPDATE tbl_master_details_employee
                 SET 
-                    employee_name = p_employee_name,
-                    employee_email = p_employee_email,
-                    employee_phone_no = p_employee_phone_no,
                     employee_floor = p_employee_floor,
                     employee_seniority = p_employee_seniority,
                     employee_agency = p_employee_agency,

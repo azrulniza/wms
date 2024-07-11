@@ -3,8 +3,14 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
+import axios from 'axios';
+import { useToast } from 'primevue/usetoast';
+
+const API_URL = import.meta.env.VITE_BASE_URL;
 
 const router = useRouter();
+const toast = useToast();
+const emit = defineEmits(['profileSaved']);
 
 const name = ref('');
 const icNo = ref('');
@@ -17,7 +23,7 @@ const emailError = ref(false);
 const staffIdError = ref(false);
 const phoneNoError = ref(false);
 
-const BtnSaveEmployeeProfile = () => {
+const BtnSaveEmployeeProfile = async () => {
     nameError.value = !name.value;
     icNoError.value = !icNo.value;
     emailError.value = !email.value;
@@ -25,9 +31,39 @@ const BtnSaveEmployeeProfile = () => {
     phoneNoError.value = !phoneNo.value;
 
     if (name.value && icNo.value && email.value && staffId.value && phoneNo.value) {
-        router.push({ name: 'employeelist' });
+        //router.push({ name: 'employeelist' });
+        try {
+            await saveProfile();
+            //router.push({ name: 'employeelist' });
+        } catch (error) {
+            console.error('Error saving employee profile:', error);
+        }
+        console.log('Saving employee profile...');
     }
 };
+
+const saveProfile = async () => {
+    try {
+        const payload = {
+            employee_name: name.value,
+            employee_ic_no: icNo.value,
+            employee_email: email.value,
+            employee_staff_id: staffId.value,
+            employee_phone_no: phoneNo.value
+        };
+
+        const response = await axios.post(`${API_URL}/employee/insert`, payload);
+
+        // Emit an event with the response data to the parent component
+        emit('profileSaved', response.data); // Assuming 'emit' is accessible here
+
+        toast.add({ severity: 'success', summary: 'Success', detail: response.data.message, life: 3000 });
+    } catch (error) {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to saving employee profile', life: 3000 });
+        console.error('Error saving employee profile:', error);
+    }
+};
+
 
 const BtnCancelEmployeeProfile = () => {
     router.push({ name: 'employeelist' });

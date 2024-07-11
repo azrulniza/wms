@@ -19,8 +19,8 @@ Route::post('/agency/update/{id}', [AgencyController::class, 'updateAgency']);
 Route::post('/agency/delete/{id}', [AgencyController::class, 'softDeleteAgency']);
 
 Route::post('/employee/insert', [EmployeeController::class, 'insertEmployee']);
-Route::post('/employee/update', [EmployeeController::class, 'updateEmployment']);
-Route::post('/employee/update-profile', [EmployeeController::class, 'updateEmployeeProfile']);
+Route::put('/employee/update', [EmployeeController::class, 'updateEmployment']);
+Route::put('/employee/update-profile', [EmployeeController::class, 'updateEmployeeProfile']);
 Route::post('/employee/delete', [EmployeeController::class, 'softDeleteEmployee']);
 Route::get('/employee', [EmployeeController::class, 'getEmployee']);
 Route::get('/employee/details/{id}', [EmployeeController::class, 'getEmployeeDetails']);

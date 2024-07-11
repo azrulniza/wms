@@ -57,7 +57,7 @@ class EmployeeController extends Controller
 
             // Return a success response
             return response()->json([
-                'message' => 'Employee inserted successfully.', 'data' => $result
+                'message' => 'Employee inserted successfully.', 'data' => $result[0]
             ], 200);
         } catch (\Exception $e) {
             // Log the error
@@ -75,9 +75,6 @@ class EmployeeController extends Controller
     {
         try {
             $id = $request->input('id');
-            $employee_name = $request->input('employee_name');
-            $employee_email = $request->input('employee_email');
-            $employee_phone_no = $request->input('employee_phone_no');
             $employee_floor = $request->input('employee_floor');
             $employee_seniority = $request->input('employee_seniority');
             $employee_agency = $request->input('employee_agency');
@@ -86,7 +83,7 @@ class EmployeeController extends Controller
             $employee_position_status = $request->input('employee_position_status');
             $employee_start_join_dt = $request->input('employee_start_join_dt');
             $employee_end_join_dt = $request->input('employee_end_join_dt');
-            $active = $request->input('active');
+            $active = $request->input('active') ?: 1;
             $pdpa = $request->input('pdpa');
             $employee_remarks = $request->input('employee_remarks');
             $employee_conversion_dt = $request->input('employee_conversion_dt');
@@ -103,11 +100,8 @@ class EmployeeController extends Controller
             $changed_on = now(); // Example: Current datetime
 
             // Execute the stored procedure
-            $result = DB::select('CALL update_employment_test(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?)', [
+            $result = DB::select('CALL update_employment(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?)', [
                 $id,
-                $employee_name,
-                $employee_email,
-                $employee_phone_no,
                 $employee_floor,
                 $employee_seniority,
                 $employee_agency,
@@ -191,7 +185,7 @@ class EmployeeController extends Controller
             $employee = DB::select('CALL get_employee_details(?)', [$id]);
 
             if (empty($employee)) {
-                return response()->json(['message' => 'Employee not found'], 404);
+                return response()->json(['message' => 'Employee not found']);
             } else {
                 $employee = $employee[0]; // Since it's an array of stdClass objects, we take the first one
 

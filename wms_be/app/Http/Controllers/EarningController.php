@@ -23,7 +23,7 @@ class EarningController extends Controller
         if (!empty($latestEarning)) {
             return response()->json($latestEarning[0]);
         } else {
-            return response()->json(['message' => 'No earnings found for this employee'], 404);
+            return response()->json(['message' => 'No earnings found for this employee']);
         }
     }
 
