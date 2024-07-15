@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\FloorController;
@@ -12,6 +13,20 @@ use App\Http\Controllers\PositionStatusController;
 use App\Http\Controllers\EarningController;
 use App\Http\Controllers\UserRoleController;
 
+
+Route::group([
+    'middleware' => 'api',
+    'prefix' => 'auth'
+], function ($router) {
+    Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:api')->name('logout');
+    Route::post('/refresh', [AuthController::class, 'refresh'])->middleware('auth:api')->name('refresh');
+    Route::post('/me', [AuthController::class, 'me'])->middleware('auth:api')->name('me');
+});
+
+
+Route::post('/register', [AuthController::class, 'register'])->name('register');
+Route::post('/login', [AuthController::class, 'login'])->name('login');
+Route::get('/user-access', [AuthController::class, 'getAllUserAccess']);
 
 Route::get('/agency', [AgencyController::class, 'getAgency']);
 Route::post('/agency/insert', [AgencyController::class, 'insertAgency']);

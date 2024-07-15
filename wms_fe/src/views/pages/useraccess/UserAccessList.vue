@@ -10,22 +10,37 @@ import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 import TriStateCheckbox from 'primevue/tristatecheckbox';
 import { FilterMatchMode } from 'primevue/api';
+import axios from 'axios';
 
 const router = useRouter();
 const confirm = useConfirm();
 const toast = useToast();
 
-const users = ref([
-    {
-        id: 1,
-        user_name: 'admin',
-        user_role: 'Administrator',
-        active: 1
+const API_URL = import.meta.env.VITE_BASE_URL;
+
+const users = ref([]);
+//const DFUserRole = ref('');
+//const editUserRole = ref('');
+//const selectedUserRole = ref(null);
+
+const getUserAccessList = async () => {
+    try {
+        const response = await axios.get(`${API_URL}/user-access`);
+        // Add runningNumber property to each employee item
+        users.value = response.data.data.map((item, index) => ({
+            ...item,
+            runningNumber: index + 1,
+            is_active: item.active === 1 ? true : false
+        }));
+        //console.log('User access list:', users.value);
+    } catch (error) {
+        console.error('Failed to fetch user access list:', error);
     }
-]);
+};
 
 const filters = ref({
-    active: { value: null, matchMode: FilterMatchMode.EQUALS }
+    active: { value: null, matchMode: FilterMatchMode.EQUALS },
+    global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 });
 
 const isMobileView = ref(window.innerWidth < 991);
@@ -36,8 +51,8 @@ const onResize = () => {
 
 onMounted(() => {
     window.addEventListener('resize', onResize);
+    getUserAccessList();
 });
-
 
 const BtnUserDelete = (event) => {
     confirm.require({
@@ -88,25 +103,53 @@ const menuItems = [
                     </div>
                 </div>
 
-                <DataTable class="md:col-12 mt-0" v-model:filters="filters" :value="users" filterDisplay="menu" :paginator="true" :row-hover="false" :rows="10">
-                    <Column class="md:col-1" field="id" id="DfUserAcessID" header="ID" />
-                    <Column class="md:col-3" field="user_name" id="DfUserName" header="Username" />
-                    <Column class="md:col-4" field="user_role" id="DfUserRole" header="User Role" />
+                <DataTable
+                    class="md:col-12 mt-0"
+                    v-model:filters="filters"
+                    :value="users"
+                    filterDisplay="menu"
+                    :paginator="true"
+                    :row-hover="false"
+                    :rows="10"
+                    removableSort
+                    :globalFilterFields="['user_name', 'user_role_name', 'user_email', 'runningNumber']"
+                    scrollable
+                >
+                    <IconField iconPosition="left">
+                        <InputIcon>
+                            <i class="pi pi-search" />
+                        </InputIcon>
+                        <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
+                    </IconField>
+                    <template #empty> No record found. </template>
+
+                    <Column class="md:col-1" field="runningNumber" id="DfUserAcessID" header="No." sortable />
+                    <Column class="md:col-3" field="user_name" id="DfUserName" header="Username" sortable />
+                    <Column class="md:col-3" field="user_email" id="DfUserName" header="Email" sortable />
+                    <Column class="md:col-4" field="user_role_name" id="DfUserRole" header="User Role" sortable />
                     <Column class="md:col-1" field="active" header="Status" id="DfUserStatus" dataType="boolean" bodyClass="text-center">
                         <template #body="{ data }">
-                            <i class="pi" :class="{ 'pi-check-circle text-green-500': data.verified, 'pi-times-circle text-red-400': !data.verified }"></i>
+                            <i class="pi" :class="{ 'pi-check-circle text-green-500': data.active, 'pi-times-circle text-red-400': !data.active }"></i>
                         </template>
-                        <template #filter="{ filterModel, filterCallback }">
-                            <TriStateCheckbox v-model="filterModel.value" @change="filterCallback()" />
+
+                        <template #filter="{ filterModel }">
+                            <label for="is_active-filter" class="font-bold"> Is Active </label>
+                            <TriStateCheckbox v-model="filterModel.value" inputId="is_active" />
                         </template>
                     </Column>
                     <Column class="md:col-1" field="action" header="Action">
-                        <template #body="slotProps">
+                        <template #body="{ data }">
                             <div class="flex justify-content-center">
-                                <Button icon="pi pi-pencil" class="mr-2" severity="primary" v-tooltip.top="'edit'" @click="BtnUserEdit(slotProps.data)" rounded />
+                                <Button icon="pi pi-pencil" class="mr-2" severity="primary" v-tooltip.top="'edit'" @click="BtnUserEdit(data)" rounded />
                                 <Toast />
                                 <ConfirmPopup></ConfirmPopup>
-                                <Button @click="BtnUserDelete($event)" icon="pi pi-trash" severity="danger" v-tooltip.top="'deactivate'" rounded></Button>
+                                <Button
+                                    @click="(event) => BtnUserDelete(event, data)"
+                                    :icon="data.active ? 'pi pi-trash' : 'pi pi-refresh'"
+                                    :severity="data.active ? 'danger' : 'secondary'"
+                                    v-tooltip.top="data.active ? 'delete' : 'reactivate'"
+                                    rounded
+                                />
                             </div>
                         </template>
                     </Column>

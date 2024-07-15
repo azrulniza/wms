@@ -226,6 +226,19 @@ return new class extends Migration
                 WHERE id = p_id;
             END
         ');
+
+        DB::unprepared('
+            CREATE PROCEDURE get_employee_by_email(IN emp_email VARCHAR(255))
+            BEGIN
+                SELECT * FROM tbl_master_details_employee
+                WHERE employee_email COLLATE utf8mb4_unicode_ci = emp_email;
+            END
+            
+        ');
     }
 
+    public function down()
+    {
+        DB::unprepared('DROP PROCEDURE IF EXISTS get_employee_by_email');
+    }
 };

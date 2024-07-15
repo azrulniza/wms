@@ -1,15 +1,17 @@
 <script setup>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { agencyCreate } from '@/service/Administration'; // Import agencyCreate function
+import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_BASE_URL;
 const router = useRouter();
 
 const userName = ref('');
 const userPassword = ref('');
 const userRole = ref();
 
-const selectedUserRole = ref([{ name: 'Admin', code: 'Admin' }]);
+const selectedUserRole = ref([]);
 
 const userNameError = ref(false);
 const userPasswordError = ref(false);
@@ -20,6 +22,21 @@ const validate = () => {
     userPasswordError.value = !userPassword.value;
     userRoleError.value = !userRole.value;
     return !userNameError.value && !userPasswordError.value && !userRoleError.value;
+};
+
+const getUserRoles = async () => {
+    try {
+        const response = await axios.get(`${API_URL}/user-roles`);
+        // Map the API response to match the format expected by the Dropdown component
+        selectedUserRole.value = response.data.data
+            .filter((item) => item.active === 1)
+            .map((item) => ({
+                id: item.id,
+                name: item.role
+            }));
+    } catch (error) {
+        console.error('Error fetching seniority details:', error);
+    }
 };
 
 const BtnUserAdd = async () => {
@@ -57,6 +74,10 @@ const BtnUserAdd = async () => {
 const BtnCancel = () => {
     router.push({ name: 'useraccesslist' });
 };
+
+onMounted(() => {
+    getUserRoles();
+});
 </script>
 
 <template>
@@ -68,9 +89,9 @@ const BtnCancel = () => {
                     <div class="p-fluid formgrid grid flex justify-content-center">
                         <div class="field col-12 md:col-8">
                             <div class="field col-12">
-                                <label for="user_name">Username</label>
-                                <InputText v-model="userName" id="DfUserName" type="text" placeholder="Enter Username" :class="{ 'p-invalid': userNameError }" />
-                                <small v-if="userNameError" class="p-error">Username is required!</small>
+                                <label for="user_email">Email</label>
+                                <InputText v-model="user_email" id="DfUserEmail" type="text" placeholder="Enter Email" :class="{ 'p-invalid': userEmailError }" />
+                                <small v-if="userEmailError" class="p-error">Email is required!</small>
                             </div>
                             <div class="field col-12">
                                 <label for="user_password">Password</label>
