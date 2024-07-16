@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Validator;
 
@@ -23,7 +24,7 @@ class AuthController extends Controller
     public function register()
     {
         $validator = Validator::make(request()->all(), [
-            'user_name' => 'required',
+            //'user_name' => 'required',
             'user_role' => 'required',
             'user_email' => 'required|email|unique:tbl_user_access',
             'user_password' => 'required|confirmed|min:8',
@@ -40,11 +41,11 @@ class AuthController extends Controller
 
 
             if (empty($employee)) {
-                return response()->json(['error' => 'Employee does not exist'], 400);
+                return response()->json(['error' => 'Employee does not exist']);
             }
 
             $user = new User;
-            $user->user_name = request()->user_name;
+            //$user->user_name = request()->user_name;
             $user->user_role = request()->user_role;
             $user->user_email = request()->user_email;
             $user->user_password = bcrypt(request()->user_password);
@@ -53,7 +54,6 @@ class AuthController extends Controller
             $user->save();
         } catch (Exception $e) {
             DB::rollBack();
-            dd($e);
 
             // Log the error for debugging purposes
             Log::error('Failed to get user: ' . $e->getMessage());
@@ -146,5 +146,93 @@ class AuthController extends Controller
         $users = DB::select('CALL get_user_access()');
 
         return UserAccessResource::collection($users);
+    }
+
+    public function getUserDetail($id)
+    {
+        try {
+            $userDetails = DB::select('CALL get_user_details(?)', [$id]);
+
+            if (empty($userDetails)) {
+                return response()->json(['error' => 'User not found']);
+            }
+
+            return response()->json($userDetails[0], 200);
+        } catch (Exception $e) {
+            Log::error('Failed to get user details: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to get user details'], 500);
+        }
+    }
+
+    public function updateUser(Request $request, $id)
+    {
+        $request->validate([
+            'user_email' => 'required|email',
+            'user_role' => 'required|integer',
+            'user_password' => 'nullable|string|min:8',
+        ]);
+
+        $userEmail = $request->input('user_email');
+        $userRole = $request->input('user_role');
+        $userPassword = bcrypt($request->input('user_password'));
+
+        $employee = DB::select('CALL get_employee_by_email(?)', [request()->user_email]);
+        DB::commit();
+
+
+        if (empty($employee)) {
+            return response()->json(['error' => 'Employee does not exist']);
+        }
+        // Set the employee ID if an employee exists
+        $employee_id = $employee[0]->id;
+
+        try {
+            DB::statement('CALL update_user(?, ?, ?, ?, ?)', [
+                $id,
+                $userEmail,
+                $userRole,
+                $userPassword,
+                $employee_id
+            ]);
+
+            return response()->json([
+                'id' => $id,
+                'message' => 'User updated successfully'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to update user',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function sofDeleteUserAccess(Request $request)
+    {
+        $request->validate([
+            'active' => 'required|boolean'
+        ]);
+
+        $active = $request->input('active');
+        $id = $request->input('id');
+        //$changedBy = Auth::id();  // Assuming you are using Laravel's built-in Auth system
+        $changedBy = 1;  // Assuming you are using Laravel's built-in Auth system
+
+        try {
+            DB::statement('CALL soft_delete_user_access(?, ?, ?)', [
+                $id,
+                $active,
+                $changedBy
+            ]);
+
+            return response()->json([
+                'message' => $active ? 'User activated successfully' : 'User deactivated successfully'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to update user status',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -1,27 +1,63 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { agencyCreate } from '@/service/Administration'; // Import agencyCreate function
 import axios from 'axios';
+import { useToast } from 'primevue/usetoast';
 
 const API_URL = import.meta.env.VITE_BASE_URL;
 const router = useRouter();
+const toast = useToast();
 
-const userName = ref('');
+const userEmail = ref('');
 const userPassword = ref('');
 const userRole = ref();
 
 const selectedUserRole = ref([]);
 
-const userNameError = ref(false);
+const userEmailError = ref(false);
 const userPasswordError = ref(false);
 const userRoleError = ref(false);
+const userEmailFormat = ref(false);
+const userPasswordFormat = ref(false);
 
 const validate = () => {
-    userNameError.value = !userName.value;
-    userPasswordError.value = !userPassword.value;
+    // Reset error states
+    userEmailError.value = false;
+    userPasswordError.value = false;
+    userRoleError.value = false;
+    userPasswordFormat.value = false;
+
+    // Validate email
+    if (!userEmail.value.trim()) {
+        userEmailError.value = true; // Email is required
+    } else if (!isValidEmail(userEmail.value)) {
+        userEmailFormat.value = true; // Invalid email format
+    }
+
+    // Validate password
+    if (!userPassword.value) {
+        userPasswordError.value = true; // Password is required
+    } else if (!isValidPassword(userPassword.value)) {
+        userPasswordFormat.value = true; // Invalid password format
+    }
+
+    // Validate user role
     userRoleError.value = !userRole.value;
-    return !userNameError.value && !userPasswordError.value && !userRoleError.value;
+
+    // Return overall validation result
+    return !userEmailError.value && !userPasswordError.value && !userRoleError.value && !userPasswordFormat.value && !userEmailFormat.value;
+};
+
+const isValidEmail = (email) => {
+    // Regular expression for basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+};
+
+const isValidPassword = (password) => {
+    // Regular expression for password validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return passwordRegex.test(password);
 };
 
 const getUserRoles = async () => {
@@ -45,28 +81,33 @@ const BtnUserAdd = async () => {
         return;
     }
 
-    // Prepare agency data
-    const data = {
-        agency_name: userName.value,
-        agency_address: userPassword.value,
-        agency_phone_no: userRole.value
-    };
-
     try {
-        // Call agencyCreate API function
-        const result = await agencyCreate(data);
+        const response = await axios.post(`${API_URL}/register`, {
+            user_email: userEmail.value,
+            user_password: userPassword.value,
+            user_role: userRole.value.id,
+            user_password_confirmation: userPassword.value
+        });
+
+        //Handle API response as needed
+        if (response.data.id > 0) {
+            //reset form fields after successful submission
+            userEmail.value = '';
+            userPassword.value = '';
+            userRole.value = '';
+            toast.add({ severity: 'success', summary: 'Success', detail: 'User Access added', life: 3000 });
+
+            router.push({ name: 'useraccesslist' });
+        } else {
+            console.log(response.data.message);
+            toast.add({ severity: 'error', summary: 'Error', detail: response.data.error, life: 4000 });
+        }
+
         // Handle API response as needed
-        console.log('Agency added:', result);
-
-        // Optionally, you can reset form fields after successful submission
-        userName.value = '';
-        userPassword.value = '';
-        userRole.value = '';
-
-        // Navigate to employerlist route after successful save
-        router.push({ name: 'employerlist' });
+        console.log('User Access added:', response);
     } catch (error) {
         console.error('Failed to add user:', error);
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to add user', life: 4000 });
         // Optionally, show a toast or error message here
     }
 };
@@ -90,12 +131,13 @@ onMounted(() => {
                         <div class="field col-12 md:col-8">
                             <div class="field col-12">
                                 <label for="user_email">Email</label>
-                                <InputText v-model="user_email" id="DfUserEmail" type="text" placeholder="Enter Email" :class="{ 'p-invalid': userEmailError }" />
+                                <InputText v-model="userEmail" id="DfUserEmail" type="text" placeholder="Enter Email" :class="({ 'p-invalid': userEmailError }, { 'p-invalid': userEmailFormat })" />
                                 <small v-if="userEmailError" class="p-error">Email is required!</small>
+                                <small v-if="userEmailFormat" class="p-error">Invalid email format!</small>
                             </div>
                             <div class="field col-12">
                                 <label for="user_password">Password</label>
-                                <Password v-model="userPassword" id="DfUserPassword" placeholder="Password" toggleMask :class="{ 'p-invalid': userPasswordError }">
+                                <Password v-model="userPassword" id="DfUserPassword" placeholder="Password" toggleMask :class="({ 'p-invalid': userPasswordError }, { 'p-invalid': userPasswordFormat })">
                                     <template #header>
                                         <h6>Pick a password</h6>
                                     </template>
@@ -106,11 +148,13 @@ onMounted(() => {
                                             <li>At least one lowercase</li>
                                             <li>At least one uppercase</li>
                                             <li>At least one numeric</li>
+                                            <li>At least one special character</li>
                                             <li>Minimum 8 characters</li>
                                         </ul>
                                     </template>
                                 </Password>
                                 <small v-if="userPasswordError" class="p-error">Password is required!</small>
+                                <small v-if="userPasswordFormat" class="p-error">Password must contain at least one lowercase letter, one uppercase letter, one number, one special character, and be at least 8 characters long!</small>
                             </div>
                             <div class="field col-12">
                                 <label for="user_role">User Role</label>

@@ -54,17 +54,33 @@ onMounted(() => {
     getUserAccessList();
 });
 
-const BtnUserDelete = (event) => {
+const BtnUserDelete = (event, userAccess) => {
+    const actionMessage = userAccess.active ? 'delete' : 'reactivate';
+    const message = `Do you want to ${actionMessage} this user access?`;
+
     confirm.require({
         target: event.currentTarget,
-        message: 'Do you want to deactivate this record?',
+        message: message,
         icon: 'pi pi-info-circle',
         rejectClass: 'p-button-secondary p-button-outlined p-button-sm',
         acceptClass: 'p-button-danger p-button-sm',
         rejectLabel: 'Cancel',
-        acceptLabel: 'deactivate',
-        accept: () => {
-            toast.add({ severity: 'info', summary: 'Confirmed', detail: 'Record deleted', life: 3000 });
+        acceptLabel: actionMessage.charAt(0).toUpperCase() + actionMessage.slice(1),
+        accept: async () => {
+            try {
+                const response = await axios.put(`${API_URL}/user-access/delete`, {
+                    id: userAccess.id,
+                    active: userAccess.active === 1 ? 0 : 1
+                });
+
+                toast.add({ severity: 'success', summary: 'Success', detail: response.data.message, life: 3000 });
+                getUserAccessList(); // Reload the component data after delete action
+
+                //toast.add({ severity: 'info', summary: 'Confirmed', detail: response.data.message, life: 3000 });
+            } catch (error) {
+                toast.add({ severity: 'error', summary: 'Error', detail: `Failed to ${actionMessage} user role`, life: 3000 });
+                console.error(`Error ${actionMessage} user role:`, error);
+            }
         }
     });
 };
@@ -79,7 +95,7 @@ const BtnUserEdit = (user) => {
 
 const menuItems = [
     {
-        label: 'Add Agency',
+        label: 'Add User',
         icon: 'pi pi-plus',
         command: () => {
             BtnUserAdd();
@@ -112,7 +128,7 @@ const menuItems = [
                     :row-hover="false"
                     :rows="10"
                     removableSort
-                    :globalFilterFields="['user_name', 'user_role_name', 'user_email', 'runningNumber']"
+                    :globalFilterFields="['user_role_name', 'user_email', 'runningNumber']"
                     scrollable
                 >
                     <IconField iconPosition="left">
@@ -124,7 +140,7 @@ const menuItems = [
                     <template #empty> No record found. </template>
 
                     <Column class="md:col-1" field="runningNumber" id="DfUserAcessID" header="No." sortable />
-                    <Column class="md:col-3" field="user_name" id="DfUserName" header="Username" sortable />
+                    <!-- <Column class="md:col-3" field="user_name" id="DfUserName" header="Username" sortable /> -->
                     <Column class="md:col-3" field="user_email" id="DfUserName" header="Email" sortable />
                     <Column class="md:col-4" field="user_role_name" id="DfUserRole" header="User Role" sortable />
                     <Column class="md:col-1" field="active" header="Status" id="DfUserStatus" dataType="boolean" bodyClass="text-center">

@@ -27,6 +27,9 @@ Route::group([
 Route::post('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::get('/user-access', [AuthController::class, 'getAllUserAccess']);
+Route::get('/user-access/{id}', [AuthController::class, 'getUserDetail']);
+Route::put('/user-access/update/{id}', [AuthController::class, 'updateUser']);
+Route::put('/user-access/delete', [AuthController::class, 'sofDeleteUserAccess']);
 
 Route::get('/agency', [AgencyController::class, 'getAgency']);
 Route::post('/agency/insert', [AgencyController::class, 'insertAgency']);
