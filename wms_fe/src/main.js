@@ -1,5 +1,6 @@
 import { createApp } from 'vue';
 import App from './App.vue';
+import { createPinia } from 'pinia';
 import router from './router';
 
 import PrimeVue from 'primevue/config';
@@ -91,58 +92,58 @@ import SplitterPanel from 'primevue/splitterpanel';
 import Steps from 'primevue/steps';
 import StyleClass from 'primevue/styleclass';
 import TabMenu from 'primevue/tabmenu';
-import TieredMenu from 'primevue/tieredmenu';
+import Tag from 'primevue/tag';
 import Textarea from 'primevue/textarea';
+import TieredMenu from 'primevue/tieredmenu';
+import Timeline from 'primevue/timeline';
 import Toast from 'primevue/toast';
 import ToastService from 'primevue/toastservice';
-import Toolbar from 'primevue/toolbar';
-import TabView from 'primevue/tabview';
-import TabPanel from 'primevue/tabpanel';
-import Tag from 'primevue/tag';
-import Terminal from 'primevue/terminal';
-import Timeline from 'primevue/timeline';
 import ToggleButton from 'primevue/togglebutton';
+import Toolbar from 'primevue/toolbar';
 import Tooltip from 'primevue/tooltip';
 import Tree from 'primevue/tree';
 import TreeSelect from 'primevue/treeselect';
 import TreeTable from 'primevue/treetable';
 import TriStateCheckbox from 'primevue/tristatecheckbox';
 import VirtualScroller from 'primevue/virtualscroller';
-
 import BlockViewer from '@/components/BlockViewer.vue';
 
 import '@/assets/styles.scss';
-
+import TabView from 'primevue/tabview';
+import TabPanel from 'primevue/tabpanel';
 const app = createApp(App);
 
+// Initialize Pinia
+const pinia = createPinia();
+app.use(pinia);
+
+// Use Router
 app.use(router);
+
+// Use PrimeVue and other services
 app.use(PrimeVue, { ripple: true });
-app.use(ToastService);
-app.use(DialogService);
 app.use(ConfirmationService);
+app.use(DialogService);
+app.use(ToastService);
 
-app.directive('tooltip', Tooltip);
-app.directive('badge', BadgeDirective);
-app.directive('ripple', Ripple);
-app.directive('styleclass', StyleClass);
-
-app.component('BlockViewer', BlockViewer);
-
+// Register PrimeVue components globally
+app.component('AutoComplete', AutoComplete);
 app.component('Accordion', Accordion);
 app.component('AccordionTab', AccordionTab);
-app.component('AutoComplete', AutoComplete);
 app.component('Avatar', Avatar);
 app.component('AvatarGroup', AvatarGroup);
 app.component('Badge', Badge);
+app.directive('badge', BadgeDirective);
 app.component('BlockUI', BlockUI);
-app.component('Breadcrumb', Breadcrumb);
+app.component('BlockViewer', BlockViewer);
 app.component('Button', Button);
 app.component('ButtonGroup', ButtonGroup);
+app.component('Breadcrumb', Breadcrumb);
 app.component('Calendar', Calendar);
 app.component('Card', Card);
 app.component('Chart', Chart);
-app.component('Carousel', Carousel);
 app.component('CascadeSelect', CascadeSelect);
+app.component('Carousel', Carousel);
 app.component('Checkbox', Checkbox);
 app.component('Chip', Chip);
 app.component('Chips', Chips);
@@ -172,10 +173,10 @@ app.component('Inplace', Inplace);
 app.component('InputGroup', InputGroup);
 app.component('InputGroupAddon', InputGroupAddon);
 app.component('InputIcon', InputIcon);
-app.component('InputMask', InputMask);
-app.component('InputNumber', InputNumber);
 app.component('InputSwitch', InputSwitch);
 app.component('InputText', InputText);
+app.component('InputMask', InputMask);
+app.component('InputNumber', InputNumber);
 app.component('Knob', Knob);
 app.component('Listbox', Listbox);
 app.component('MegaMenu', MegaMenu);
@@ -193,31 +194,33 @@ app.component('Password', Password);
 app.component('PickList', PickList);
 app.component('ProgressBar', ProgressBar);
 app.component('ProgressSpinner', ProgressSpinner);
-app.component('RadioButton', RadioButton);
 app.component('Rating', Rating);
+app.component('RadioButton', RadioButton);
+app.directive('ripple', Ripple);
 app.component('Row', Row);
 app.component('SelectButton', SelectButton);
 app.component('ScrollPanel', ScrollPanel);
 app.component('ScrollTop', ScrollTop);
+app.component('Skeleton', Skeleton);
 app.component('Slider', Slider);
 app.component('Sidebar', Sidebar);
-app.component('Skeleton', Skeleton);
 app.component('SpeedDial', SpeedDial);
 app.component('SplitButton', SplitButton);
 app.component('Splitter', Splitter);
 app.component('SplitterPanel', SplitterPanel);
 app.component('Steps', Steps);
+app.directive('styleclass', StyleClass);
 app.component('TabMenu', TabMenu);
 app.component('TabView', TabView);
 app.component('TabPanel', TabPanel);
 app.component('Tag', Tag);
 app.component('Textarea', Textarea);
-app.component('Terminal', Terminal);
 app.component('TieredMenu', TieredMenu);
 app.component('Timeline', Timeline);
 app.component('Toast', Toast);
-app.component('Toolbar', Toolbar);
 app.component('ToggleButton', ToggleButton);
+app.component('Toolbar', Toolbar);
+app.directive('tooltip', Tooltip);
 app.component('Tree', Tree);
 app.component('TreeSelect', TreeSelect);
 app.component('TreeTable', TreeTable);

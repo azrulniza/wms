@@ -2,17 +2,26 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useLayout } from '@/layout/composables/layout';
 import router from '../router';
+import { useAuthStore } from '@/store/auth';
 
+const authStore = useAuthStore();
+const user = computed(() => authStore.getUser);
+//const isAuthenticated = computed(() => authStore.isAuthenticated);
+
+const name = ref(user.value.employee_name || '');
+const initials = computed(() => getInitials(name.value));
 const { layoutConfig, onMenuToggle } = useLayout();
 
 const outsideClickListener = ref(null);
 const topbarMenuActive = ref(false);
 
 const BtnSignOut = () => {
+    authStore.clearAuthData(); // Clear auth data
     router.push({ name: 'login' });
 };
 
 const menu = ref();
+
 const items = ref([
     {
         label: 'Manage Profile',
@@ -76,6 +85,20 @@ const isOutsideClicked = (event) => {
 
     return !(sidebarEl.isSameNode(event.target) || sidebarEl.contains(event.target) || topbarEl.isSameNode(event.target) || topbarEl.contains(event.target));
 };
+
+const getInitials = (fullName) => {
+    const words = fullName.split(' ');
+    let initials = '';
+    for (let i = 0; i < words.length && initials.length < 2; i++) {
+        initials += words[i].charAt(0).toUpperCase();
+    }
+    if (initials.length < 2 && words.length > 1) {
+        initials += words[1].charAt(0).toUpperCase();
+    } else if (initials.length < 2 && words.length === 1) {
+        initials += words[0].charAt(1).toUpperCase();
+    }
+    return initials;
+};
 </script>
 
 <template>
@@ -89,13 +112,13 @@ const isOutsideClicked = (event) => {
         </button>
 
         <button class="p-link layout-topbar-menu-button" @click="toggle" v-tooltip.left="'Option'">
-            <Avatar label="MR" shape="circle" />
+            <Avatar :label="initials" shape="circle" />
         </button>
 
         <div class="layout-topbar-menu" :class="topbarMenuClasses">
-            <span class="flex align-items-center mr-2" id="TxtUserName">Muaz Rahman</span>
+            <span class="flex align-items-center mr-2" id="TxtUserName"> {{ name }}</span>
             <button @click="toggle" class="p-link" v-tooltip.left="'profile'">
-                <Avatar label="MR" shape="circle" />
+                <Avatar :label="initials" shape="circle" />
             </button>
             <Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
         </div>

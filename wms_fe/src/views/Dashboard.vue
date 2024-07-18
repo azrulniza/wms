@@ -1,7 +1,14 @@
 <script setup>
-import { onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { ProductService } from '@/service/ProductService';
 import { useLayout } from '@/layout/composables/layout';
+import { useAuthStore } from '@/store/auth';
+
+const authStore = useAuthStore();
+const user = computed(() => authStore.getUser);
+const isAuthenticated = computed(() => authStore.isAuthenticated);
+console.log('User:', user.value);
+console.log('Is authenticated:', isAuthenticated.value);
 
 const { isDarkTheme } = useLayout();
 

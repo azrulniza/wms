@@ -1,6 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import AppLayout from '@/layout/AppLayout.vue';
 import AppMenuItem from '../layout/AppMenuItem.vue';
+//import { useMyStore } from '../store/myStore';
+import { setActivePinia, createPinia } from 'pinia';
+//import pinia from '../store';
+import { useAuthStore } from '@/store/auth';
+
+// Create Pinia instance and set it as active
+const pinia = createPinia();
+setActivePinia(pinia);
+
+//const authStore = useAuthStore();
 
 const router = createRouter({
     history: createWebHistory(),
@@ -12,7 +22,9 @@ const router = createRouter({
                 {
                     path: '/',
                     name: 'dashboard',
-                    component: () => import('@/views/Dashboard.vue')
+                    component: () => import('@/views/Dashboard.vue'),
+                    meta: { requiresAuth: true, roles: ['1', '2'] }
+                    //meta: { requiresAuth: true }
                 },
                 {
                     path: '/profile',
@@ -260,4 +272,29 @@ const router = createRouter({
     ]
 });
 
+// Navigation guard to check authentication and role permissions
+router.beforeEach((to, from, next) => {
+    const authStore = useAuthStore();
+
+    if (to.meta.requiresAuth) {
+        console.log('AUTH_STORE', authStore.isAuthenticated);
+        console.log('AUTH_STORE', authStore.getUser);
+        // Check if user is authenticated
+        if (!authStore.isAuthenticated) {
+            // Redirect to login page if not authenticated
+            //next({ name: 'login', query: { redirect: to.fullPath } });
+            next({ name: 'login'});
+        } else {
+            // Check role permissions if roles are specified
+            if (to.meta.roles && !to.meta.roles.includes(authStore.getUser.user_role)) {
+                // Redirect to access denied page or any other appropriate page
+                next({ name: 'accessDenied' });
+            } else {
+                next(); // Proceed to the route
+            }
+        }
+    } else {
+        next(); // Proceed to the route that doesn't require authentication
+    }
+});
 export default router;

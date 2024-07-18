@@ -70,15 +70,27 @@ class AuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function login()
+    public function login(Request $request)
     {
-        $credentials = [
-            'user_email' => request()->user_email,
-            'password' => request()->user_password,
-            'active' => 1, // Ensure the user is active
+        $request->validate([
+            'user_email' => 'required|email',
+            'user_password' => 'required|string|min:6',
+        ]);
+
+        // Get credentials from the request
+        $credentials = $request->only('user_email', 'user_password');
+
+        // Ensure the user is active
+        $credentials['active'] = 1;
+
+        // Rename the keys to 'email' and 'password' for the attempt method
+        $credentialsForAuthAttempt = [
+            'user_email' => $credentials['user_email'],
+            'password' => $credentials['user_password'],
+            'active' => $credentials['active'],
         ];
 
-        if (!$token = auth()->attempt($credentials)) {
+        if (!$token = auth()->attempt($credentialsForAuthAttempt)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
@@ -128,6 +140,8 @@ class AuthController extends Controller
     protected function respondWithToken($token)
     {
         $user = auth()->user();
+        $employee = $user->employee; // Assuming the relationship is correctly set up
+
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
@@ -137,6 +151,8 @@ class AuthController extends Controller
                 'user_role' => $user->user_role,
                 'user_name' => $user->user_name,
                 'user_email' => $user->user_email,
+                'employee_name' => $employee->employee_name,
+                'employee_phone_no' => $employee->employee_phone_no,
             ]
         ]);
     }
