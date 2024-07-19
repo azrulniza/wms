@@ -102,6 +102,64 @@ return new class extends Migration
             END //
             DELIMITER ;
         ');
+
+        DB::unprepared('
+            DELIMITER $$
+
+            CREATE PROCEDURE get_active_user_by_email(IN user_email VARCHAR(255))
+            BEGIN
+                SELECT * FROM tbl_user_access
+                WHERE user_email = user_email AND active = 1;
+            END $$
+
+            DELIMITER ;
+        ');
+
+        DB::unprepared('
+            DELIMITER $$
+
+            CREATE PROCEDURE update_forgot_password_details(
+                IN user_id INT, 
+                IN new_token VARCHAR(255)
+            )
+            BEGIN
+                UPDATE tbl_user_access
+                SET 
+                    forgot_password_expired_on = DATE_ADD(NOW(), INTERVAL 1 HOUR),
+                    forgot_password_token = new_token
+                WHERE id = user_id;
+
+                SELECT forgot_password_expired_on, forgot_password_token
+                FROM tbl_user_access
+                WHERE id = user_id;
+            END $$
+
+            DELIMITER ;
+        ');
+
+        DB::unprepared('
+            DELIMITER //
+
+            CREATE PROCEDURE `validate_reset_token` (
+                IN user_email_param VARCHAR(255),
+                IN forgot_password_token_param VARCHAR(255),
+                IN current_time_param DATETIME
+            )
+            BEGIN
+                DECLARE valid INT DEFAULT 0;
+
+                SELECT COUNT(*)
+                INTO valid
+                FROM tbl_user_access
+                WHERE user_email = user_email_param
+                AND forgot_password_token = forgot_password_token_param
+                AND forgot_password_expired_on >= current_time_param;
+
+                SELECT valid;
+            END //
+
+            DELIMITER ;
+        ');
     }
 
     /**
@@ -112,5 +170,8 @@ return new class extends Migration
         DB::unprepared('DROP PROCEDURE IF EXISTS get_user_access');
         DB::unprepared('DROP PROCEDURE IF EXISTS get_user_details');
         DB::unprepared('DROP PROCEDURE IF EXISTS update_user');
+        DB::unprepared('DROP PROCEDURE IF EXISTS soft_delete_user_access');
+        DB::unprepared('DROP PROCEDURE IF EXISTS get_active_user_by_email');
+        DB::unprepared('DROP PROCEDURE IF EXISTS update_forgot_password_details');
     }
 };

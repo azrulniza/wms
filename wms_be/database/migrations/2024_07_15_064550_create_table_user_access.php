@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('table_user_access', function (Blueprint $table) {
+        Schema::create('tbl_user_access', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('employee_id')->nullable();
             $table->string('user_role')->nullable();
@@ -25,6 +25,8 @@ return new class extends Migration
             $table->dateTime('created_on')->nullable()->default(now());
             $table->string('changed_by')->nullable();
             $table->dateTime('changed_on')->nullable();
+            $table->dateTime('forgot_password_expired_on')->nullable();
+            $table->string('forgot_password_expired_on')->nullable();
             $table->timestamps();
         });
     }
@@ -34,6 +36,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('table_user_access');
+        Schema::dropIfExists('tbl_user_access');
     }
 };

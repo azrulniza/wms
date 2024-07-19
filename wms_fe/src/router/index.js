@@ -268,6 +268,41 @@ const router = createRouter({
             path: '/auth/error',
             name: 'error',
             component: () => import('@/views/pages/auth/Error.vue')
+        },
+        {
+            path: '/auth/forgotpasswordsuccess',
+            name: 'forgotpasswordsuccess',
+            component: () => import('@/views/pages/auth/ForgotPasswordSuccess.vue'),
+            beforeEnter: (to, from, next) => {
+                const passwordResetRequested = localStorage.getItem('passwordResetRequested');
+                if (passwordResetRequested) {
+                    // Clear the flag after validation
+                    localStorage.removeItem('passwordResetRequested');
+                    next();
+                } else {
+                    next({ name: 'login' }); // Redirect to forgot password / login if not valid
+                }
+            }
+        },
+        {
+            path: '/auth/resetpassword',
+            name: 'resetpassword',
+            component: () => import('@/views/pages/auth/ResetPassword.vue')
+        },
+        {
+            path: '/auth/resetpasswordsuccess',
+            name: 'resetpasswordsuccess',
+            component: () => import('@/views/pages/auth/ResetPasswordSuccess.vue'),
+            beforeEnter: (to, from, next) => {
+                const passwordReseted = localStorage.getItem('passwordReseted');
+                if (passwordReseted && from.name === 'resetpassword') {
+                    // Clear the flag after validation
+                    localStorage.removeItem('passwordResetRequested');
+                    next();
+                } else {
+                    next({ name: 'login' }); // Redirect to forgot password / login if not valid
+                }
+            }
         }
     ]
 });
@@ -283,7 +318,7 @@ router.beforeEach((to, from, next) => {
         if (!authStore.isAuthenticated) {
             // Redirect to login page if not authenticated
             //next({ name: 'login', query: { redirect: to.fullPath } });
-            next({ name: 'login'});
+            next({ name: 'login' });
         } else {
             // Check role permissions if roles are specified
             if (to.meta.roles && !to.meta.roles.includes(authStore.getUser.user_role)) {
@@ -297,4 +332,5 @@ router.beforeEach((to, from, next) => {
         next(); // Proceed to the route that doesn't require authentication
     }
 });
+
 export default router;

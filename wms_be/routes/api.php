@@ -11,6 +11,7 @@ use App\Http\Controllers\PositionController;
 use App\Http\Controllers\PositionLevelController;
 use App\Http\Controllers\PositionStatusController;
 use App\Http\Controllers\EarningController;
+use App\Http\Controllers\TestMailController;
 use App\Http\Controllers\UserRoleController;
 
 
@@ -23,6 +24,9 @@ Route::group([
     Route::post('/me', [AuthController::class, 'me'])->middleware('auth:api')->name('me');
 });
 
+Route::post('/forgot-password', [AuthController::class, 'sendForgotPasswordEmail']);
+Route::post('/reset-password-validate', [AuthController::class, 'validateToken']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 Route::post('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/login', [AuthController::class, 'login'])->name('login');

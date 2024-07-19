@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserAccessResource;
+use App\Mail\ForgotPasswordMail;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Validator;
 
 
@@ -249,6 +252,102 @@ class AuthController extends Controller
                 'error' => 'Failed to update user status',
                 'message' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    public function sendForgotPasswordEmail(Request $request)
+    {
+        $request->validate([
+            'user_email' => 'required|email',
+        ]);
+
+        $userEmail = $request->input('user_email');
+
+        try {
+            // Start a transaction
+            DB::beginTransaction();
+
+            // Get the active user by email
+            $user = DB::select('CALL get_active_user_by_email(?)', [$userEmail]);
+
+            if (empty($user)) {
+                // Rollback the transaction if user does not exist
+                DB::rollBack();
+                return response()->json(['error' => 'User does not exist']);
+            }
+
+            // Generate a unique token (if you don't have one, you should generate it)
+            $token = bin2hex(random_bytes(32));
+
+            // Update forgot_password_expired_on field and get the updated value
+            $result = DB::select('CALL update_forgot_password_details(?,?)', [$user[0]->id, $token]);
+            $expiredOn = $result[0]->forgot_password_expired_on;
+            $forgot_password_token = $result[0]->forgot_password_token;
+
+            // Commit the transaction
+            DB::commit();
+
+            $appUrl = env('APP_URL');
+            $details = [
+                'title' => 'Reset Your Password',
+                'body' => 'You are receiving this email because we received a password reset request for your account.',
+                'reset_url' => $appUrl . '/auth/resetpassword?token=' . $forgot_password_token . '&email=' . $user[0]->user_email
+            ];
+
+
+            // Send email
+            Mail::to($user[0]->user_email)->send(new ForgotPasswordMail($details));
+            return response()->json(['message' => 'Password reset email sent successfully', 'success' => true]);
+        } catch (\Throwable $th) {
+            return response()->json(['error' => 'Failed to send password reset email', 'error' => $th->getMessage()]);
+        }
+    }
+
+    public function validateToken(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+        ]);
+
+        $email = $request->email;
+        $token = $request->token;
+        $currentTime = Carbon::now();
+
+        $result = DB::select('CALL validate_reset_token(?, ?, ?)', [$email, $token, $currentTime]);
+
+        if ($result && $result[0]->valid) {
+            return response()->json(['valid' => true]);
+        } else {
+            return response()->json(['valid' => false]);
+        }
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|min:8',
+        ]);
+
+        $user = DB::table('tbl_user_access')
+            ->where('user_email', $request->email)
+            ->where('forgot_password_token', $request->token)
+            //->where('forgot_password_expired_on', '>=', Carbon::now())
+            ->first();
+
+        if ($user) {
+            DB::table('tbl_user_access')
+                ->where('user_email', $request->email)
+                ->where('id', $user->id)
+                ->update([
+                    'user_password' => bcrypt($request->password),
+                ]);
+
+            return response()->json(['message' => 'Password updated successfully', 'success' => true]);
+        } else {
+            return response()->json(['error' => 'Invalid token or email']);
         }
     }
 }
